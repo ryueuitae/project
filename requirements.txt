@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+implicit
+scipy
+matplotlib
