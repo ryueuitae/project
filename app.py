@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import logging
 import os
+from PIL import Image
 
-# 한글 폰트 설정 (로컬/클라우드 모두 대응)
 def set_korean_font():
     try:
         plt.rcParams['font.family'] = 'Malgun Gothic'
@@ -25,7 +25,6 @@ def set_korean_font():
             plt.rcParams['axes.unicode_minus'] = False
 
 set_korean_font()
-
 logging.basicConfig(level=logging.INFO)
 
 try:
@@ -33,7 +32,8 @@ try:
 except:
     BASE_DIR = os.getcwd()
 
-DATA_PATH = BASE_DIR
+DATA_PATH  = BASE_DIR
+IMAGE_DIR  = os.path.join(BASE_DIR, 'images')
 
 ERA_MAP = {
     '50': '1950s', '60': '1960s', '70': '1970s', '80': '1980s',
@@ -222,11 +222,31 @@ with tab2:
 
         st.markdown("---")
 
+        # 이미지 카드 표시
+        st.markdown("#### 추천 아이템")
+        cols = st.columns(5)
+        for idx, (_, row) in enumerate(result.iterrows()):
+            with cols[idx % 5]:
+                img_path = os.path.join(IMAGE_DIR, row['item_name'])
+                if os.path.exists(img_path):
+                    st.image(img_path, use_container_width=True)
+                else:
+                    st.markdown("🖼️")
+                era_code = row['item_name'].split('_')[2]
+                year     = ERA_MAP.get(era_code, era_code)
+                st.caption(f"**{row['style']}** | {row['gender']}")
+                st.caption(f"📅 {year}")
+                st.caption(f"⭐ {row['als_score']:.2f}")
+
+        st.markdown("---")
+
+        # 테이블
         display = result[['item_name', 'style', 'gender', 'season', 'als_score']].copy()
         display.columns = ['아이템명', '스타일', '성별', '시즌', 'AI 추천점수']
         display['AI 추천점수'] = display['AI 추천점수'].round(2)
         st.dataframe(display, use_container_width=True)
 
+        # 스타일 분포 차트
         st.markdown("#### 추천 아이템 스타일 분포")
         style_dist = result['style'].value_counts()
         fig5, ax5 = plt.subplots(figsize=(8, 3))
